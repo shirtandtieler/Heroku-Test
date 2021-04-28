@@ -1,5 +1,6 @@
 from app import db
 
+
 # NOTE: Not currently used
 class User(db.Model):
     uid = db.Column(db.Integer, primary_key=True)
