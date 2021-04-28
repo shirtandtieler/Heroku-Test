@@ -4,7 +4,7 @@ class AccountType:
 
     @staticmethod
     def value_of(type_name: str):
-        """ Expands the guessed name to the actual one """
+        """ Expands a guessed name to the actual one """
         guess = type_name.lower()
         actual = None
         if guess[0] == "s" or guess.startswith("cand"):  # seeker / candidate
