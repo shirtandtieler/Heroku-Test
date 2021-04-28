@@ -12,7 +12,8 @@ def index():
 
 
 @app.route('/login', methods=['GET', 'POST'])
-def login(): # sdlfjksdlkf
+def login():
+    """ Handles the login page by showing and submitting the form """
     form = LoginForm()
     if form.validate_on_submit():
         flash('Login requested for user {}, remember_me={}'.format(
@@ -23,6 +24,7 @@ def login(): # sdlfjksdlkf
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    """ Handles the registration page by showing and submitting the form """
     form = RegisterForm()
     if form.validate_on_submit():
         flash('User {} performed registration for a {} account'.format(
