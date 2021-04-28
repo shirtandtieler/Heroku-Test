@@ -1,0 +1,38 @@
+<html>
+
+<head>
+	<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<style>
+		a.active {
+			color: white;
+			background-color: #009dd9;
+		}
+	</style>
+
+	{% if title %}
+	<title>{{ title }}</title>
+	{% else %}
+	<title>Project by Team 3</title>
+	{% endif %}
+
+</head>
+
+<body>
+	{% include "nav.html" %}
+
+	{% with messages = get_flashed_messages() %}
+	{% if messages %}
+	<ul>
+		{% for message in messages %}
+		<li>{{ message }}</li>
+		{% endfor %}
+	</ul>
+	{% endif %}
+	{% endwith %}
+
+	{% block content %}{% endblock %}
+
+</body>
+
+</html>
