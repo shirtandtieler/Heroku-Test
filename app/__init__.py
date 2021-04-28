@@ -8,4 +8,4 @@ app.config.from_object(Config)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-from app import routes, routes  # at the bottom to avoid circular deps
+from app import routes, models  # at the bottom to avoid circular deps
