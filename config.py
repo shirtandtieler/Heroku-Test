@@ -24,13 +24,13 @@ def build_db_url(user=None, pw=None, host=None, port=None, db=None):
     if port:
         url += f":{port}"
     url += f"/{db}"
+    print(url)
     return url
-
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'you-will-never-guess'
     # When uploaded to heroku, DATABASE_URL will be set.
     # For local testing, the fallback will be used (if listed)
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or build_db_url()
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or build_db_url("user", "sudowoodo", "localhost", "5432", "website_project")
     # When track is false, do not signal the application every time a change is about to be made in the database
     SQLALCHEMY_TRACK_MODIFICATIONS = False
