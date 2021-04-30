@@ -1,5 +1,18 @@
 {% extends "base.html" %}
+<head>
+    <script>
+    function on_type_update(is_seeker) {
+        if (is_seeker) {
+            document.getElementById("name-field-seeker").style.display = "initial";
+            document.getElementById("name-field-company").style.display = "none";
+        } else {
+            document.getElementById("name-field-seeker").style.display = "none";
+            document.getElementById("name-field-company").style.display = "initial";
+        }
 
+    }
+    </script>
+</head>
 {% block content %}
 <h1>Register</h1>
 <form action="" method="post" novalidate>

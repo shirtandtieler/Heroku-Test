@@ -1,3 +1,0 @@
-
-class Seeker:
-    pass

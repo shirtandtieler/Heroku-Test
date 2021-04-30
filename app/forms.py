@@ -18,6 +18,6 @@ class RegisterForm(FlaskForm):
     submit = SubmitField('Register')
 
 
-class PostForm(FlaskForm):
+class JobPostForm(FlaskForm):
     title = StringField('Job Title', validators=[DataRequired()])
     submit = SubmitField('Post it!')

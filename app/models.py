@@ -1,85 +1,134 @@
 # coding: utf-8
 # Attempted to be generated from Tyler's local postgresql db based on his proposed data dictionary
 # BUT that didn't work so I simplified it
-from sqlalchemy import Boolean, CheckConstraint, Column, Date, Enum, ForeignKey, Integer, SmallInteger, String, Sequence, Table, Text, UniqueConstraint, text
-from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.postgresql import TIMESTAMP
-from sqlalchemy.ext.declarative import declarative_base
+from datetime import datetime
 
-from app import db
+from sqlalchemy import Boolean, CheckConstraint, Column, Date, Enum, ForeignKey, Integer, SmallInteger, String, \
+    Sequence, Table, Text, UniqueConstraint, text, MetaData, DateTime
+from sqlalchemy.orm import relationship, validates
 
-Base = declarative_base()
-metadata = Base.metadata
+from app import db, login
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import UserMixin
+
+metadata = MetaData()
+
+account_types = Enum('Seeker', 'Company', 'Admin', name='account_types')
+skill_types = Enum('tech', 'biz', name='skill_types')
 
 
-class Attitude(db.Model, Base):
+class Attitude(db.Model):
     __tablename__ = 'attitude'
-    __table_args__ = (
-        CheckConstraint('id > 0'),
-    )
 
-    id = Column(Integer, Sequence('attitude_seq'), primary_key=True)
+    id = Column(Integer, primary_key=True)
     title = Column(String(191), nullable=False, unique=True)
 
-    seekers = relationship('Seekerprofile', secondary='seekerattitude')
+    def __repr__(self):
+        return f"Attitude[{self.title}]"
 
 
-class Skill(db.Model, Base):
+class Skill(db.Model):
     __tablename__ = 'skill'
-    __table_args__ = (
-        CheckConstraint('id > 0'),
-    )
 
-    id = Column(Integer, Sequence('skill_seq'), primary_key=True)
+    id = Column(Integer, primary_key=True)
     title = Column(String(191), nullable=False, unique=True)
-    type = Column(Enum('tech', 'biz', name='skill_types'), nullable=False)
+    type = Column(skill_types, nullable=False)
+
+    def __repr__(self):
+        return f"{self.type.capitalize()}Skill[{self.title}]"
 
 
-class Useraccount(db.Model, Base):
+class Useraccount(UserMixin, db.Model):
     __tablename__ = 'useraccount'
-    __table_args__ = (
-        CheckConstraint('id > 0'),
-    )
 
-    id = Column(Integer, Sequence('useraccount_seq'), primary_key=True)
-    account_type = Column(Enum('Seeker', 'Company', 'Admin', name='account_types'), nullable=False)
+    id = Column(Integer, primary_key=True)
+    account_type = Column(account_types, nullable=False)
     email = Column(String(191), nullable=False, unique=True, comment='login email')
     password = Column(String(191), nullable=False)
 
+    is_active = Column(Boolean, default=True)
+    join_date = Column(DateTime, nullable=False, default=datetime.utcnow)
+    last_login = Column(DateTime, nullable=False, default=datetime.utcnow)
+
     def __repr__(self):
-        return f"{self.account_type}User[{self.email}]"
+        status = ("" if self.is_active else "Non") + "Active"
+        return f"{status}{self.account_type}User[{self.email}]"
 
-t_companyprofile = Table(
-    'companyprofile', metadata,
-    Column('company_id', ForeignKey('useraccount.id'), nullable=False, unique=True),
-    Column('company_name', String(191), server_default=text("NULL::character varying")),
-    Column('city', String(191), server_default=text("NULL::character varying")),
-    Column('state_abbv', String(2), server_default=text("NULL::character varying")),
-    Column('zip_code', String(5), server_default=text("NULL::character varying")),
-    Column('website', String(191), server_default=text("NULL::character varying")),
-    CheckConstraint('company_id > 0')
-)
+    def set_password(self, password):
+        self.password = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
 
 
-t_seekerprofile = Table(
-    'seekerprofile', metadata,
-    Column('seeker_id', ForeignKey('useraccount.id'), nullable=False, unique=True),
-    Column('contact_email', String(191), nullable=False),
-    Column('first_name', String(191), server_default=text("NULL::character varying")),
-    Column('last_name', String(191), server_default=text("NULL::character varying")),
-    Column('contact_phone', Integer),
-    Column('city', String(191), server_default=text("NULL::character varying")),
-    Column('state_abbv', String(2), server_default=text("NULL::character varying")),
-    Column('zip_code', String(5), server_default=text("NULL::character varying")),
-    CheckConstraint('seeker_id > 0')
-)
+class CompanyProfile(db.Model):  # one to one with company-type user account
+    __tablename__ = 'companyprofile'
+
+    id = Column(Integer, primary_key=True)
+    company_id = Column('company_id', ForeignKey('useraccount.id'), nullable=False, unique=True)
+    name = Column(String(191), server_default=text("NULL"))
+    city = Column(String(191), server_default=text("NULL"))
+    state = Column(String(2), server_default=text("NULL"))
+    website = Column(String(191), server_default=text("NULL"))
+
+    job_posts = relationship("JobPost", back_populates="company")
+
+    def __repr__(self):
+        return f"CompanyProfile[{self.name}]"
+
+    @validates('company_id')
+    def validate_account(self, key, company_id):
+        acct = Useraccount.query.filter_by(id=company_id).first()
+        if acct is None:
+            raise ValueError(f"No account w/id={company_id}")
+        enum_company = account_types.enums[1]
+        if enum_company != 'Company':
+            raise ValueError(f"Sanity check failed. 'Company' not at enums[1].")
+        if acct.account_type != enum_company:
+            raise ValueError(f"Account type is not a Company")
+        return company_id
 
 
-t_useractivity = Table(
-    'useractivity', metadata,
-    Column('user_id', ForeignKey('useraccount.id'), nullable=False, unique=True),
-    Column('is_active', Boolean, nullable=False, server_default=text("true")),
-    Column('join_date', TIMESTAMP(precision=0), nullable=False, server_default=text("now()")),
-    Column('last_login', TIMESTAMP(precision=0), nullable=False, server_default=text("now()")),
-    CheckConstraint('user_id > 0')
-)
+class SeekerProfile(db.Model):  # one to one with seeker-type user account
+    __tablename__ = 'seekerprofile'
+
+    id = Column(Integer, primary_key=True)
+    seeker_id = Column(ForeignKey('useraccount.id'), nullable=False, unique=True)
+    first_name = Column(String(191), nullable=False)
+    last_name = Column(String(191), nullable=False)
+    phone_number = Column(Integer)
+    city = Column(String(191), server_default=text("NULL"))
+    state = Column(String(2), server_default=text("NULL"))
+
+    @validates('seeker_id')
+    def validate_account(self, key, seeker_id):
+        acct = Useraccount.query.filter_by(id=seeker_id).first()
+        if acct is None:
+            raise ValueError(f"No account w/id={seeker_id}")
+        enum_seeker = account_types.enums[0]
+        if enum_seeker != 'Seeker':
+            raise ValueError(f"Sanity check failed. 'Seeker' not at enums[0].")
+        if acct.account_type != enum_seeker:
+            raise ValueError(f"Account type is not a Seeker")
+        return seeker_id
+
+
+class JobPost(db.Model):  # many to one with company-type user account
+    __tablename__ = 'jobpost'
+
+    id = Column(Integer, primary_key=True)
+    company_id = Column(ForeignKey('companyprofile.company_id'), nullable=False)
+    job_title = Column(String(191), nullable=False)
+    description = Column(String(191))
+    created_timestamp = Column(DateTime, default=datetime.utcnow)
+
+    company = relationship("CompanyProfile", back_populates="job_posts")
+
+    def __repr__(self):
+        return f"JobPost[by#{self.company_id}|{self.job_title}]"
+
+
+@login.user_loader
+def load_user(id):
+    print(f"Loading user w/id {id}")
+    return Useraccount.query.get(int(id))

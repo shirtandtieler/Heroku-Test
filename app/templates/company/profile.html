@@ -1,10 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-</body>
-</html>
+{% block content %}
+
+<h2>{{name}}'s Company Profile</h2>
+
+{% if citystate %}
+<p>Headquarters in {{ citystate }}</p>
+{% endif %}
+
+{% if url %}
+<footer>Learn more @ {{ url }}</footer>
+{% endif %}
+
+{% endblock %}
