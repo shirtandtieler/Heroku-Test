@@ -25,15 +25,23 @@ def build_db_url(user=None, pw=None, host=None, port=None, db=None):
     if port:
         url += f":{port}"
     url += f"/{db}"
-    print(url)
+    return url
+
+def get_database_url():
+    url = os.environ.get('DATABASE_URL')
+    if url:
+        # fix for SQLAlchemy requiring 'postgresql' not 'postgres'
+        url = url.replace("postgres:", "postgresql")
+    else:
+        url = build_db_url(user="user", pw="password",
+                             host="localhost", port="5432",
+                             db="jobsite")
+    print(f"DB URL: {url}")
     return url
 
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'team3-super-secret-key-omg'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-                              build_db_url(user="user", pw="password",
-                                           host="localhost", port="5432",
-                                           db="jobsite")
+    SQLALCHEMY_DATABASE_URI = get_database_url()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     LOG_TO_STDOUT = os.environ.get('LOG_TO_STDOUT')
