@@ -1,8 +1,7 @@
-# coding: utf-8
-# Attempted to be generated from Tyler's local postgresql db based on his proposed data dictionary
-# BUT that didn't work so I simplified it
 from datetime import datetime
+from hashlib import md5
 
+from flask import url_for
 from sqlalchemy import Boolean, CheckConstraint, Column, Date, Enum, ForeignKey, Integer, SmallInteger, String, \
     Sequence, Table, Text, UniqueConstraint, text, MetaData, DateTime
 from sqlalchemy.orm import relationship, validates
@@ -38,12 +37,12 @@ class Skill(db.Model):
         return f"{self.type.capitalize()}Skill[{self.title}]"
 
 
-class Useraccount(UserMixin, db.Model):
+class User(UserMixin, db.Model):
     __tablename__ = 'useraccount'
 
     id = Column(Integer, primary_key=True)
     account_type = Column(account_types, nullable=False)
-    email = Column(String(191), nullable=False, unique=True, comment='login email')
+    email = Column(String(191), nullable=False, unique=True)
     password = Column(String(191), nullable=False)
 
     is_active = Column(Boolean, default=True)
@@ -59,6 +58,33 @@ class Useraccount(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password, password)
+
+    def avatar(self, size):
+        digest = md5(self.email.lower().encode('utf-8')).hexdigest()
+        return 'https://www.gravatar.com/avatar/{}?d=identicon&s={}'.format(
+            digest, size)
+
+    def to_dict(self):
+        data = {
+            'id': self.id,
+            'account_type': self.account_type,
+            'email': self.email,
+            'is_active': self.is_active,
+            'join_date': self.join_date.isoformat() + 'Z',
+            'last_login': self.last_login.isoformat() + 'Z',
+            '_links': {
+                'self': url_for('api.get_user', id=self.id),
+                'avatar': self.avatar(128)
+            }
+        }
+        return data
+
+    def from_dict(self, data):
+        for field, value in data.items():
+            if field == 'password':
+                self.set_password(value)
+            else:
+                setattr(self, field, value)
 
 
 class CompanyProfile(db.Model):  # one to one with company-type user account
@@ -78,7 +104,7 @@ class CompanyProfile(db.Model):  # one to one with company-type user account
 
     @validates('company_id')
     def validate_account(self, key, company_id):
-        acct = Useraccount.query.filter_by(id=company_id).first()
+        acct = User.query.filter_by(id=company_id).first()
         if acct is None:
             raise ValueError(f"No account w/id={company_id}")
         enum_company = account_types.enums[1]
@@ -102,7 +128,7 @@ class SeekerProfile(db.Model):  # one to one with seeker-type user account
 
     @validates('seeker_id')
     def validate_account(self, key, seeker_id):
-        acct = Useraccount.query.filter_by(id=seeker_id).first()
+        acct = User.query.filter_by(id=seeker_id).first()
         if acct is None:
             raise ValueError(f"No account w/id={seeker_id}")
         enum_seeker = account_types.enums[0]
@@ -131,4 +157,4 @@ class JobPost(db.Model):  # many to one with company-type user account
 @login.user_loader
 def load_user(id):
     print(f"Loading user w/id {id}")
-    return Useraccount.query.get(int(id))
+    return User.query.get(int(id))

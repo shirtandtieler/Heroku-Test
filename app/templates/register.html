@@ -1,55 +1,14 @@
 {% extends "base.html" %}
-<head>
-    <script>
-    function on_type_update(is_seeker) {
-        if (is_seeker) {
-            document.getElementById("name-field-seeker").style.display = "initial";
-            document.getElementById("name-field-company").style.display = "none";
-        } else {
-            document.getElementById("name-field-seeker").style.display = "none";
-            document.getElementById("name-field-company").style.display = "initial";
-        }
+{% import 'bootstrap/wtf.html' as wtf %}
 
-    }
-    </script>
-</head>
-{% block content %}
+{% block app_content %}
 <h1>Register</h1>
-<form action="" method="post" novalidate>
-    {{ form.hidden_tag() }}
-
-    {% for subfield in form.account_type %}
-    <tr>
-        <td>{{ subfield }}</td>
-        <td>{{ subfield.label }}</td>
-    </tr>
-    {% endfor %}<br/>
-    {% for error in form.account_type.errors %}
-    <span style="color: red;">[{{ error }}]</span>
-    {% endfor %}
-
-    <p>
-        {{ form.email.label }}<br>
-        {{ form.email(size=32) }}<br>
-        {% for error in form.email.errors %}
-        <span style="color: red;">[{{ error }}]</span>
-        {% endfor %}
-    </p>
-
-    <p>
-        {{ form.password.label }}<br>
-        {{ form.password(size=32) }}<br>
-        {% for error in form.password.errors %}
-        <span style="color: red;">[{{ error }}]</span>
-        {% endfor %}
-    </p>
-
-    <p>
-        {{ form.accept_terms() }} {{ form.accept_terms.label }}<br>
-        {% for error in form.accept_terms.errors %}
-        <span style="color: red;">[{{ error }}]</span>
-        {% endfor %}
-    </p>
-    <p>{{ form.submit() }}</p>
-</form>
+<div class="row">
+    <div class="col-md-4">
+        {{ wtf.quick_form(form) }}
+    </div>
+</div>
+<p>
+    Have an account? <a href="{{ url_for('auth.login') }}">Click to Log in!</a>
+</p>
 {% endblock %}
