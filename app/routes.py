@@ -11,6 +11,7 @@ from app.models import Useraccount, SeekerProfile, CompanyProfile
 @app.route("/")
 @app.route("/index")
 def index():
+    """ Home page """
     return render_template("index.html", title="Home")
 
 
@@ -62,6 +63,7 @@ def register():
 @app.route('/profile')
 @login_required
 def profile():
+    """ Displays profile based on the current user's account type """
     # query user accounts for "current_user"'s ID
     user = Useraccount.query.filter_by(id=current_user.get_id()).first()
     if user is None:
@@ -94,6 +96,7 @@ def profile():
 @app.route("/postjob", methods=['GET', 'POST'])
 @login_required
 def postjob():
+    """ New job page; non-company users will be redirected to the homepage (as a safety measure) """
     user = Useraccount.query.filter_by(id=current_user.get_id()).first()
     if user is None:
         flash('Could not find user!')
