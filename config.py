@@ -31,7 +31,7 @@ def get_database_url():
     url = os.environ.get('DATABASE_URL')
     if url:
         # fix for SQLAlchemy requiring 'postgresql' not 'postgres'
-        url = url.replace("postgres:", "postgresql")
+        url = url.replace("postgres:", "postgresql:")
     else:
         url = build_db_url(user="user", pw="password",
                              host="localhost", port="5432",
