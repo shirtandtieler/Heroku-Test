@@ -1,9 +1,10 @@
 # This module provides a way to centralize all global configurations
 # (rather than cluttering the entry file)
-# It's suggested as part of Miguel Grinberg's Flask Mega-Tutorial
 import os
+from dotenv import load_dotenv
 
 basedir = os.path.abspath(os.path.dirname(__file__))
+load_dotenv(os.path.join(basedir, '.env'))
 
 
 def build_db_url(user=None, pw=None, host=None, port=None, db=None):
@@ -29,10 +30,10 @@ def build_db_url(user=None, pw=None, host=None, port=None, db=None):
 
 
 class Config:
-    """ Contains configuration variables for quick loading in the main app file """
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'team3-secret-key-no-one-will-ever-guess123'
-    # When uploaded to heroku, DATABASE_URL will be set.
-    # For local testing, the fallback will be used (if listed)
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or build_db_url("user", "sudowoodo", "localhost", "5432", "website_project")
-    # When track is false, do not signal the application every time a change is about to be made in the database
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'team3-super-secret-key-omg'
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+                              build_db_url(user="user", pw="password",
+                                           host="localhost", port="5432",
+                                           db="jobsite")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    LOG_TO_STDOUT = os.environ.get('LOG_TO_STDOUT')

@@ -16,8 +16,3 @@ class RegisterForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired()])
     accept_terms = BooleanField('I accept the Terms and Conditions', validators=[DataRequired()])
     submit = SubmitField('Register')
-
-
-class JobPostForm(FlaskForm):
-    title = StringField('Job Title', validators=[DataRequired()])
-    submit = SubmitField('Post it!')
